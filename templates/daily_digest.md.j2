@@ -1,0 +1,18 @@
+# 📰 Digest Diário — {{ date }}
+
+> Gerado automaticamente pelo EasyNewsletter
+
+---
+
+{% for article in articles %}
+## {{ loop.index }}. {{ article.title }}
+
+**Fonte:** {{ article.source }} | **Data:** {{ article.date }}
+
+{{ article.summary }}
+
+---
+
+{% endfor %}
+
+*Total: {{ articles | length }} artigos resumidos.*

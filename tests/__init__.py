@@ -1,0 +1,1 @@
+"""EasyNewsletter tests."""
