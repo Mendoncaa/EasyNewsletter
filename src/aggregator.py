@@ -3,7 +3,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from src.config import Config
 from src.email_reader import RawEmail, fetch_newsletters
 from src.html_parser import clean_email_content
 from src.rss_reader import RSSArticle, fetch_rss_articles
@@ -99,14 +98,7 @@ def aggregate_all(days_back: int = 1) -> list[Article]:
 
     articles.sort(key=_sort_key, reverse=True)
 
-    # Apply article limit (prioritize newest)
-    total_before = len(articles)
-    if Config.MAX_ARTICLES and len(articles) > Config.MAX_ARTICLES:
-        articles = articles[:Config.MAX_ARTICLES]
-
-    print(f"\n📊 Total agregado: {len(articles)} artigos ({sum(1 for a in articles if a.origin == 'email')} emails + {sum(1 for a in articles if a.origin == 'rss')} RSS)", end="")
-    if total_before > len(articles):
-        print(f" — limitado de {total_before} para {len(articles)}")
-    else:
-        print()
+    # Note: the MAX_ARTICLES limit is applied later (after deduplication) so
+    # that already-seen articles don't consume slots reserved for new content.
+    print(f"\n📊 Total agregado: {len(articles)} artigos ({sum(1 for a in articles if a.origin == 'email')} emails + {sum(1 for a in articles if a.origin == 'rss')} RSS)")
     return articles

@@ -50,6 +50,11 @@ def run_digest(days_back: int = 1) -> None:
     if len(new_articles) < len(articles):
         print(f"\n🔄 {len(articles) - len(new_articles)} artigos já vistos, {len(new_articles)} novos")
 
+    # 2b. Apply article limit AFTER dedup (prioritize newest unseen articles)
+    if Config.MAX_ARTICLES and len(new_articles) > Config.MAX_ARTICLES:
+        print(f"   ✂️ Limitado de {len(new_articles)} para {Config.MAX_ARTICLES} artigos (MAX_ARTICLES)")
+        new_articles = new_articles[:Config.MAX_ARTICLES]
+
     # 3. Summarize only new articles
     print("\n🤖 A gerar resumos...")
     summarized = summarize_batch(new_articles)

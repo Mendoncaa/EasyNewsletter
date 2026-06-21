@@ -1,37 +1,51 @@
 """Tests for the state/deduplication module."""
 
 from dataclasses import dataclass
+from datetime import datetime
 from unittest.mock import patch
 
 from src.state import _article_hash, filter_unseen, load_seen, mark_seen, save_seen
+
+_DAY = datetime(2026, 6, 21, 10, 0)
 
 
 @dataclass
 class FakeArticle:
     title: str
     source: str
+    date: datetime | None = _DAY
 
 
 class TestArticleHash:
     def test_deterministic(self):
-        h1 = _article_hash("Title", "Source")
-        h2 = _article_hash("Title", "Source")
+        h1 = _article_hash(FakeArticle("Title", "Source"))
+        h2 = _article_hash(FakeArticle("Title", "Source"))
         assert h1 == h2
 
     def test_case_insensitive(self):
-        h1 = _article_hash("My Title", "My Source")
-        h2 = _article_hash("my title", "my source")
+        h1 = _article_hash(FakeArticle("My Title", "My Source"))
+        h2 = _article_hash(FakeArticle("my title", "my source"))
         assert h1 == h2
 
     def test_different_articles(self):
-        h1 = _article_hash("Title A", "Source")
-        h2 = _article_hash("Title B", "Source")
+        h1 = _article_hash(FakeArticle("Title A", "Source"))
+        h2 = _article_hash(FakeArticle("Title B", "Source"))
         assert h1 != h2
 
     def test_whitespace_normalized(self):
-        h1 = _article_hash("  Title  ", "  Source  ")
-        h2 = _article_hash("Title", "Source")
+        h1 = _article_hash(FakeArticle("  Title  ", "  Source  "))
+        h2 = _article_hash(FakeArticle("Title", "Source"))
         assert h1 == h2
+
+    def test_recurring_title_different_days(self):
+        """Same subject on different days must NOT collide."""
+        h1 = _article_hash(FakeArticle("Morning Briefing", "News", datetime(2026, 6, 21)))
+        h2 = _article_hash(FakeArticle("Morning Briefing", "News", datetime(2026, 6, 22)))
+        assert h1 != h2
+
+    def test_missing_date(self):
+        h = _article_hash(FakeArticle("Title", "Source", None))
+        assert isinstance(h, str) and len(h) == 16
 
 
 class TestLoadSaveSeen:
@@ -59,7 +73,7 @@ class TestLoadSaveSeen:
 class TestFilterUnseen:
     def test_filters_seen(self):
         articles = [FakeArticle("A", "Src"), FakeArticle("B", "Src")]
-        seen = {_article_hash("A", "Src")}
+        seen = {_article_hash(FakeArticle("A", "Src"))}
         result = filter_unseen(articles, seen)
         assert len(result) == 1
         assert result[0].title == "B"
@@ -75,4 +89,4 @@ class TestMarkSeen:
         articles = [FakeArticle("A", "Src")]
         seen = set()
         result = mark_seen(articles, seen)
-        assert _article_hash("A", "Src") in result
+        assert _article_hash(FakeArticle("A", "Src")) in result
