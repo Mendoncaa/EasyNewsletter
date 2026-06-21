@@ -20,7 +20,7 @@ class RSSArticle:
     """Article extracted from an RSS/Atom feed."""
     title: str
     source: str
-    date: str
+    date: datetime | None
     content: str
     link: str
 
@@ -89,7 +89,7 @@ def fetch_rss_articles(days_back: int = 1) -> list[RSSArticle]:
                 result.append(RSSArticle(
                     title=getattr(entry, "title", "Sem título"),
                     source=feed_title,
-                    date=date_str,
+                    date=entry_date,
                     content=content,
                     link=getattr(entry, "link", ""),
                 ))

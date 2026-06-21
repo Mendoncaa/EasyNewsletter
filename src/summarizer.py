@@ -138,7 +138,7 @@ def summarize_batch(articles: list[Article]) -> list[SummarizedArticle]:
         results.append(SummarizedArticle(
             title=article.title,
             source=article.source,
-            date=article.date,
+            date=article.date_str,
             summary=summary,
             origin=article.origin,
         ))

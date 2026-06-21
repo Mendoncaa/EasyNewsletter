@@ -41,15 +41,18 @@ class TestParseDate:
         msg = email.message.Message()
         msg["Date"] = "Sat, 21 Jun 2026 10:30:00 +0000"
         result = _parse_date(msg)
-        assert "2026-06-21" in result
+        assert result is not None
+        assert result.year == 2026
+        assert result.month == 6
+        assert result.day == 21
 
     def test_missing_date(self):
         msg = email.message.Message()
         result = _parse_date(msg)
-        assert result == "Data desconhecida"
+        assert result is None
 
     def test_malformed_date(self):
         msg = email.message.Message()
         msg["Date"] = "not-a-real-date"
         result = _parse_date(msg)
-        assert result == "Data desconhecida"
+        assert result is None

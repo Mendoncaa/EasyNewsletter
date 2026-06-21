@@ -1,11 +1,15 @@
 """Unified content model and aggregator for email + RSS sources."""
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from src.email_reader import fetch_newsletters, RawEmail
 from src.html_parser import clean_email_content
 from src.rss_reader import fetch_rss_articles, RSSArticle
 from src.config import Config
+
+# Sentinel for sorting: earliest possible aware datetime
+_MIN_DATE = datetime.min.replace(tzinfo=timezone.utc)
 
 
 @dataclass
@@ -13,9 +17,16 @@ class Article:
     """Normalized article from any source (email or RSS)."""
     title: str
     source: str
-    date: str
+    date: datetime | None
     content: str
     origin: str  # "email" or "rss"
+
+    @property
+    def date_str(self) -> str:
+        """Format date for display."""
+        if self.date:
+            return self.date.strftime("%Y-%m-%d %H:%M")
+        return "Data desconhecida"
 
 
 def _email_to_article(raw: RawEmail) -> Article:
@@ -77,8 +88,16 @@ def aggregate_all(days_back: int = 1) -> list[Article]:
     except Exception as e:
         print(f"   ⚠️ Erro ao ler feeds RSS: {e}")
 
-    # Sort by date (newest first), unknowns at the end
-    articles.sort(key=lambda a: a.date if a.date != "Data desconhecida" else "", reverse=True)
+    # Sort by date (newest first), None dates at the end
+    def _sort_key(a: Article) -> datetime:
+        if a.date is None:
+            return _MIN_DATE
+        # Normalize naive datetimes to UTC for comparison
+        if a.date.tzinfo is None:
+            return a.date.replace(tzinfo=timezone.utc)
+        return a.date
+
+    articles.sort(key=_sort_key, reverse=True)
 
     # Apply article limit (prioritize newest)
     total_before = len(articles)

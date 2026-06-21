@@ -15,7 +15,7 @@ class RawEmail:
     """Raw email data extracted from IMAP."""
     subject: str
     sender: str
-    date: str
+    date: datetime | None
     html_body: str
     text_body: str
 
@@ -75,16 +75,15 @@ def _extract_body(msg: email.message.Message) -> tuple[str, str]:
     return html_body, text_body
 
 
-def _parse_date(msg: email.message.Message) -> str:
-    """Extract and format the email date."""
+def _parse_date(msg: email.message.Message) -> datetime | None:
+    """Extract datetime from email Date header."""
     date_str = msg.get("Date", "")
     if date_str:
         try:
-            parsed = email.utils.parsedate_to_datetime(date_str)
-            return parsed.strftime("%Y-%m-%d %H:%M")
+            return email.utils.parsedate_to_datetime(date_str)
         except (ValueError, TypeError):
             pass
-    return "Data desconhecida"
+    return None
 
 
 def fetch_newsletters(days_back: int = 1) -> list[RawEmail]:
