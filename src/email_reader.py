@@ -79,8 +79,11 @@ def _parse_date(msg: email.message.Message) -> str:
     """Extract and format the email date."""
     date_str = msg.get("Date", "")
     if date_str:
-        parsed = email.utils.parsedate_to_datetime(date_str)
-        return parsed.strftime("%Y-%m-%d %H:%M")
+        try:
+            parsed = email.utils.parsedate_to_datetime(date_str)
+            return parsed.strftime("%Y-%m-%d %H:%M")
+        except (ValueError, TypeError):
+            pass
     return "Data desconhecida"
 
 

@@ -47,3 +47,9 @@ class TestParseDate:
         msg = email.message.Message()
         result = _parse_date(msg)
         assert result == "Data desconhecida"
+
+    def test_malformed_date(self):
+        msg = email.message.Message()
+        msg["Date"] = "not-a-real-date"
+        result = _parse_date(msg)
+        assert result == "Data desconhecida"

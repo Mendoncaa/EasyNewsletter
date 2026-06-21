@@ -5,7 +5,7 @@ from src.summarizer import _fallback_summary
 
 class TestFallbackSummary:
     def test_basic_summary(self):
-        content = "First sentence about AI. Second sentence about tech. Third sentence about news. Fourth sentence ignored."
+        content = "This is a first meaningful sentence about artificial intelligence and its future. Second important sentence about modern technology trends worldwide. Third sentence about news and global developments today. Fourth sentence that should be ignored entirely."
         result = _fallback_summary(content)
         lines = result.strip().split("\n")
         assert len(lines) == 3

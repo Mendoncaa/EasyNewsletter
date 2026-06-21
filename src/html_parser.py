@@ -7,7 +7,8 @@ import html2text
 
 
 # Tags that typically contain newsletter noise (tracking, ads, footers)
-NOISE_TAGS = ["script", "style", "noscript", "iframe", "img"]
+# Note: img is NOT here — tracking pixels are removed separately by size
+NOISE_TAGS = ["script", "style", "noscript", "iframe"]
 NOISE_CLASSES = [
     "footer", "unsubscribe", "tracking", "advertisement",
     "social-links", "email-footer", "mso", "preheader",
@@ -74,6 +75,8 @@ def html_to_clean_text(html: str) -> str:
     text = re.sub(r"\n{3,}", "\n\n", text)  # Max 2 consecutive newlines
     text = re.sub(r"[ \t]+", " ", text)       # Collapse whitespace
     text = re.sub(r"^\s+$", "", text, flags=re.MULTILINE)  # Empty lines
+    text = re.sub(r"-{3,}", "", text)         # Remove markdown table separators
+    text = re.sub(r"\|", " ", text)           # Remove table pipe chars
     text = text.strip()
 
     return text
