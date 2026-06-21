@@ -15,7 +15,7 @@
 - [x] **Etapa 3.2** — Normalização: interface unificada para conteúdo (email + RSS)
 
 ### Fase 4: Inteligência Artificial
-- [ ] **Etapa 4.1** — Integração com OpenAI (resumo de 3 linhas por artigo)
+- [x] **Etapa 4.1** — Integração com OpenAI (resumo de 3 linhas por artigo)
 - [ ] **Etapa 4.2** — Geração do ficheiro Markdown diário com template Jinja2
 
 ### Fase 5: Automação e Finalização
