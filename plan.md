@@ -4,7 +4,7 @@
 
 ### Fase 1: Fundação
 - [x] **Etapa 1.1** — Setup do projeto, estrutura de pastas, Git init, dependências
-- [ ] **Etapa 1.2** — Configuração segura (.env + config.py), gestão de credenciais
+- [x] **Etapa 1.2** — Configuração segura (.env + config.py), gestão de credenciais
 
 ### Fase 2: Leitura de Emails (IMAP)
 - [ ] **Etapa 2.1** — Conexão IMAP ao Gmail, fetch de emails de newsletters
