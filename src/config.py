@@ -17,7 +17,11 @@ class Config:
     IMAP_SERVER: str = os.getenv("IMAP_SERVER", "imap.gmail.com")
     IMAP_PORT: int = int(os.getenv("IMAP_PORT", "993"))
 
-    # OpenAI
+    # Ollama (local AI - preferred)
+    OLLAMA_URL: str = os.getenv("OLLAMA_URL", "http://localhost:11434")
+    OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "llama3.2")
+
+    # OpenAI (cloud AI - optional fallback)
     OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 
     # RSS
@@ -38,6 +42,4 @@ class Config:
             errors.append("EMAIL_ADDRESS not set")
         if not cls.EMAIL_PASSWORD:
             errors.append("EMAIL_PASSWORD not set")
-        if not cls.OPENAI_API_KEY:
-            errors.append("OPENAI_API_KEY not set")
         return errors

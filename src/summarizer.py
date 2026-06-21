@@ -1,57 +1,105 @@
-"""AI-powered article summarizer using OpenAI."""
+"""AI-powered article summarizer using Ollama (local) or OpenAI."""
 
-from openai import OpenAI
+import re
+import httpx
 
 from src.config import Config
 from src.aggregator import Article
 
-SYSTEM_PROMPT = """Eres un editor de jornal. Gera um resumo conciso em EXATAMENTE 3 linhas para o artigo fornecido.
-Regras:
-- Cada linha deve ser uma frase completa e informativa
-- Usa linguagem clara e acessível
-- Mantém os factos-chave e dados importantes
-- Responde no mesmo idioma do artigo original
-- NÃO uses bullets, numeração ou formatação especial"""
+SYSTEM_PROMPT = """You are a newspaper editor. Generate a concise summary in EXACTLY 3 lines for the provided article.
+Rules:
+- Each line must be a complete, informative sentence
+- Use clear and accessible language
+- Keep key facts and important data
+- Respond in the SAME language as the original article
+- Do NOT use bullets, numbering, or special formatting
+- Output ONLY the 3 lines, nothing else"""
 
 
-def summarize_article(article: Article) -> str:
-    """Generate a 3-line summary of an article using OpenAI.
-
-    Falls back to first 3 sentences if API key is not configured.
-    """
-    if not Config.OPENAI_API_KEY or Config.OPENAI_API_KEY.startswith("sk-your"):
-        return _fallback_summary(article.content)
-
+def _call_ollama(title: str, content: str) -> str | None:
+    """Call Ollama local API for summarization."""
     try:
+        response = httpx.post(
+            f"{Config.OLLAMA_URL}/api/chat",
+            json={
+                "model": Config.OLLAMA_MODEL,
+                "messages": [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": f"Title: {title}\n\nContent:\n{content[:3000]}"},
+                ],
+                "stream": False,
+                "options": {"temperature": 0.3, "num_predict": 200},
+            },
+            timeout=60.0,
+        )
+        response.raise_for_status()
+        return response.json()["message"]["content"].strip()
+    except httpx.ConnectError:
+        print("   ⚠️ Ollama não está a correr. Inicia com: ollama serve")
+        return None
+    except Exception as e:
+        print(f"   ⚠️ Erro Ollama: {e}")
+        return None
+
+
+def _call_openai(title: str, content: str) -> str | None:
+    """Call OpenAI API for summarization."""
+    try:
+        from openai import OpenAI
         client = OpenAI(api_key=Config.OPENAI_API_KEY)
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": f"Título: {article.title}\n\nConteúdo:\n{article.content[:3000]}"},
+                {"role": "user", "content": f"Title: {title}\n\nContent:\n{content[:3000]}"},
             ],
             max_tokens=200,
             temperature=0.3,
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
-        print(f"   ⚠️ Erro OpenAI para '{article.title[:40]}': {e}")
-        return _fallback_summary(article.content)
+        print(f"   ⚠️ Erro OpenAI: {e}")
+        return None
+
+
+def _detect_ai_backend() -> str:
+    """Detect which AI backend to use. Priority: Ollama > OpenAI > fallback."""
+    if Config.OLLAMA_URL:
+        try:
+            r = httpx.get(f"{Config.OLLAMA_URL}/api/tags", timeout=3.0)
+            if r.status_code == 200:
+                return "ollama"
+        except httpx.ConnectError:
+            pass
+
+    if Config.OPENAI_API_KEY and not Config.OPENAI_API_KEY.startswith("sk-your"):
+        return "openai"
+
+    return "fallback"
+
+
+def summarize_article(article: Article, backend: str) -> str:
+    """Generate a 3-line summary using the specified backend."""
+    result = None
+
+    if backend == "ollama":
+        result = _call_ollama(article.title, article.content)
+    elif backend == "openai":
+        result = _call_openai(article.title, article.content)
+
+    return result if result else _fallback_summary(article.content)
 
 
 def summarize_batch(articles: list[Article]) -> list[dict]:
-    """Summarize a list of articles, returning enriched dicts.
-
-    Returns list of dicts with keys: title, source, date, summary, origin.
-    """
-    has_api = Config.OPENAI_API_KEY and not Config.OPENAI_API_KEY.startswith("sk-your")
-    mode = "OpenAI" if has_api else "fallback (sem API key)"
-    print(f"   🤖 Modo de resumo: {mode}")
+    """Summarize a list of articles, returning enriched dicts."""
+    backend = _detect_ai_backend()
+    labels = {"ollama": f"Ollama ({Config.OLLAMA_MODEL})", "openai": "OpenAI", "fallback": "fallback (sem IA)"}
+    print(f"   🤖 Modo de resumo: {labels[backend]}")
 
     results = []
     for i, article in enumerate(articles):
         print(f"   📝 [{i+1}/{len(articles)}] {article.title[:50]}...")
-        summary = summarize_article(article)
+        summary = summarize_article(article, backend)
         results.append({
             "title": article.title,
             "source": article.source,
@@ -68,15 +116,12 @@ def _fallback_summary(content: str) -> str:
     if not content:
         return "Conteúdo não disponível."
 
-    # Split into sentences and filter noise
-    lines = [
-        line.strip()
-        for line in content.replace("\n", " ").split(".")
-        if len(line.strip()) > 20
-    ]
+    # Use regex for better sentence splitting (handles URLs, abbreviations)
+    text = content.replace("\n", " ")
+    sentences = re.split(r'(?<=[.!?])\s+(?=[A-Z])', text)
+    meaningful = [s.strip() for s in sentences if len(s.strip()) > 30]
 
-    if not lines:
-        return content[:200] + "..."
+    if not meaningful:
+        return content[:300].strip() + "..."
 
-    sentences = [line.strip() + "." for line in lines[:3]]
-    return "\n".join(sentences)
+    return "\n".join(meaningful[:3])
