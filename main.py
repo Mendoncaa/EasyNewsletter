@@ -20,6 +20,7 @@ from src.config import Config
 from src.aggregator import aggregate_all
 from src.summarizer import summarize_batch
 from src.markdown_generator import generate_digest
+from src.state import load_seen, save_seen, filter_unseen, mark_seen
 
 # Configure logging
 logging.basicConfig(
@@ -40,13 +41,26 @@ def run_digest(days_back: int = 1) -> None:
         print("\n📭 Nenhum artigo encontrado. Nada a gerar.")
         return
 
-    # 2. Summarize
-    print("\n🤖 A gerar resumos...")
-    summarized = summarize_batch(articles)
+    # 2. Deduplication — skip articles already seen
+    seen = load_seen()
+    new_articles = filter_unseen(articles, seen)
+    if not new_articles:
+        print(f"\n📭 Todos os {len(articles)} artigos já foram vistos. Nada de novo.")
+        return
+    if len(new_articles) < len(articles):
+        print(f"\n🔄 {len(articles) - len(new_articles)} artigos já vistos, {len(new_articles)} novos")
 
-    # 3. Generate Markdown
+    # 3. Summarize only new articles
+    print("\n🤖 A gerar resumos...")
+    summarized = summarize_batch(new_articles)
+
+    # 4. Generate Markdown
     print("\n📝 A gerar ficheiro Markdown...")
     output_path = generate_digest(summarized)
+
+    # 5. Persist state
+    seen = mark_seen(new_articles, seen)
+    save_seen(seen)
 
     print("\n" + "=" * 50)
     print(f"✅ Digest gerado com sucesso!")
