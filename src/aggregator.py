@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from src.email_reader import fetch_newsletters, RawEmail
 from src.html_parser import clean_email_content
 from src.rss_reader import fetch_rss_articles, RSSArticle
+from src.config import Config
 
 
 @dataclass
@@ -86,5 +87,14 @@ def aggregate_all(days_back: int = 1) -> list[Article]:
     # Sort by date (newest first), unknowns at the end
     articles.sort(key=lambda a: a.date if a.date != "Data desconhecida" else "", reverse=True)
 
-    print(f"\n📊 Total agregado: {len(articles)} artigos ({sum(1 for a in articles if a.origin == 'email')} emails + {sum(1 for a in articles if a.origin == 'rss')} RSS)")
+    # Apply article limit (prioritize newest)
+    total_before = len(articles)
+    if Config.MAX_ARTICLES and len(articles) > Config.MAX_ARTICLES:
+        articles = articles[:Config.MAX_ARTICLES]
+
+    print(f"\n📊 Total agregado: {len(articles)} artigos ({sum(1 for a in articles if a.origin == 'email')} emails + {sum(1 for a in articles if a.origin == 'rss')} RSS)", end="")
+    if total_before > len(articles):
+        print(f" — limitado de {total_before} para {len(articles)}")
+    else:
+        print()
     return articles
