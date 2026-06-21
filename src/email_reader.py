@@ -120,9 +120,40 @@ def fetch_newsletters(days_back: int = 1) -> list[RawEmail]:
         # Load sender blacklist from config
         blacklist = {s.lower() for s in Config.EMAIL_SENDER_BLACKLIST}
 
-        emails = []
+        # Phase 1: Fetch only headers to filter cheaply (no full body download)
+        HEADER_FIELDS = "(BODY.PEEK[HEADER.FIELDS (FROM SUBJECT DATE LIST-UNSUBSCRIBE)])"
+        newsletter_ids = []
         skipped = 0
+
         for msg_id in id_list:
+            status, header_data = mail.fetch(msg_id, HEADER_FIELDS)
+            if status != "OK":
+                continue
+
+            header_bytes = header_data[0][1]
+            header_msg = email.message_from_bytes(header_bytes)
+
+            # Filter: only include emails with List-Unsubscribe header
+            if not header_msg.get("List-Unsubscribe"):
+                skipped += 1
+                continue
+
+            # Filter: check sender blacklist
+            sender = _decode_header_value(header_msg.get("From", ""))
+            if any(blocked in sender.lower() for blocked in blacklist):
+                skipped += 1
+                continue
+
+            newsletter_ids.append(msg_id)
+
+        print(f"   🔍 {len(newsletter_ids)} newsletters identificadas ({skipped} filtrados)")
+
+        if not newsletter_ids:
+            return []
+
+        # Phase 2: Fetch full body only for newsletters that passed filtering
+        emails = []
+        for msg_id in newsletter_ids:
             status, msg_data = mail.fetch(msg_id, "(RFC822)")
             if status != "OK":
                 continue
@@ -130,25 +161,11 @@ def fetch_newsletters(days_back: int = 1) -> list[RawEmail]:
             raw_email = msg_data[0][1]
             msg = email.message_from_bytes(raw_email)
 
-            # Filter: only include emails with List-Unsubscribe header
-            # This header is legally required on newsletters (GDPR/CAN-SPAM)
-            if not msg.get("List-Unsubscribe"):
-                skipped += 1
-                continue
-
-            sender = _decode_header_value(msg.get("From", "Desconhecido"))
-
-            # Filter: check sender blacklist
-            sender_lower = sender.lower()
-            if any(blocked in sender_lower for blocked in blacklist):
-                skipped += 1
-                continue
-
             subject = _decode_header_value(msg.get("Subject", "Sem assunto"))
+            sender = _decode_header_value(msg.get("From", "Desconhecido"))
             date = _parse_date(msg)
             html_body, text_body = _extract_body(msg)
 
-            # Only include emails that have content
             if html_body or text_body:
                 emails.append(RawEmail(
                     subject=subject,
@@ -158,7 +175,7 @@ def fetch_newsletters(days_back: int = 1) -> list[RawEmail]:
                     text_body=text_body,
                 ))
 
-        print(f"   ✅ {len(emails)} newsletters extraídas ({skipped} emails filtrados)")
+        print(f"   ✅ {len(emails)} newsletters extraídas")
         return emails
     finally:
         mail.logout()

@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import time
 
 import feedparser
+import httpx
 
 from src.config import Config
 from src.html_parser import html_to_clean_text
@@ -62,7 +63,12 @@ def fetch_rss_articles(days_back: int = 1) -> list[RSSArticle]:
 
     for feed_url in feeds:
         try:
-            feed = feedparser.parse(feed_url)
+            # Fetch with timeout to prevent hangs in daemon mode
+            resp = httpx.get(
+                feed_url, timeout=15.0, follow_redirects=True, verify=True
+            )
+            resp.raise_for_status()
+            feed = feedparser.parse(resp.content)
             feed_title = feed.feed.get("title", feed_url)
 
             count = 0
@@ -90,6 +96,10 @@ def fetch_rss_articles(days_back: int = 1) -> list[RSSArticle]:
 
             print(f"   ✅ {feed_title}: {count} artigos")
 
+        except httpx.TimeoutException:
+            print(f"   ⚠️ Timeout (15s) no feed: {feed_url}")
+        except httpx.HTTPStatusError as e:
+            print(f"   ⚠️ HTTP {e.response.status_code} no feed: {feed_url}")
         except Exception as e:
             print(f"   ⚠️ Erro no feed {feed_url}: {e}")
 
