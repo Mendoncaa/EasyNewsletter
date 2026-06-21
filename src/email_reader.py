@@ -90,6 +90,9 @@ def _parse_date(msg: email.message.Message) -> str:
 def fetch_newsletters(days_back: int = 1) -> list[RawEmail]:
     """Connect to IMAP and fetch newsletter emails from the last N days.
 
+    Filters emails to only include actual newsletters (detected via
+    List-Unsubscribe header, which is legally required on all newsletters).
+
     Args:
         days_back: Number of days to look back for emails.
 
@@ -114,7 +117,11 @@ def fetch_newsletters(days_back: int = 1) -> list[RawEmail]:
         id_list = msg_ids[0].split()
         print(f"   📨 {len(id_list)} emails encontrados desde {since_date}")
 
+        # Load sender blacklist from config
+        blacklist = {s.lower() for s in Config.EMAIL_SENDER_BLACKLIST}
+
         emails = []
+        skipped = 0
         for msg_id in id_list:
             status, msg_data = mail.fetch(msg_id, "(RFC822)")
             if status != "OK":
@@ -123,8 +130,21 @@ def fetch_newsletters(days_back: int = 1) -> list[RawEmail]:
             raw_email = msg_data[0][1]
             msg = email.message_from_bytes(raw_email)
 
-            subject = _decode_header_value(msg.get("Subject", "Sem assunto"))
+            # Filter: only include emails with List-Unsubscribe header
+            # This header is legally required on newsletters (GDPR/CAN-SPAM)
+            if not msg.get("List-Unsubscribe"):
+                skipped += 1
+                continue
+
             sender = _decode_header_value(msg.get("From", "Desconhecido"))
+
+            # Filter: check sender blacklist
+            sender_lower = sender.lower()
+            if any(blocked in sender_lower for blocked in blacklist):
+                skipped += 1
+                continue
+
+            subject = _decode_header_value(msg.get("Subject", "Sem assunto"))
             date = _parse_date(msg)
             html_body, text_body = _extract_body(msg)
 
@@ -138,7 +158,7 @@ def fetch_newsletters(days_back: int = 1) -> list[RawEmail]:
                     text_body=text_body,
                 ))
 
-        print(f"   ✅ {len(emails)} emails com conteúdo extraídos")
+        print(f"   ✅ {len(emails)} newsletters extraídas ({skipped} emails filtrados)")
         return emails
     finally:
         mail.logout()
