@@ -11,7 +11,7 @@
 - [x] **Etapa 2.2** — Parsing de HTML de emails → texto limpo
 
 ### Fase 3: Leitura de RSS
-- [ ] **Etapa 3.1** — Leitor de feeds RSS/Atom configuráveis
+- [x] **Etapa 3.1** — Leitor de feeds RSS/Atom configuráveis
 - [ ] **Etapa 3.2** — Normalização: interface unificada para conteúdo (email + RSS)
 
 ### Fase 4: Inteligência Artificial

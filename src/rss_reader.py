@@ -1,1 +1,97 @@
-"""RSS/Atom feed reader."""
+"""RSS/Atom feed reader for newsletter aggregation."""
+
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+import time
+
+import feedparser
+
+from src.config import Config
+from src.html_parser import html_to_clean_text
+
+
+@dataclass
+class RSSArticle:
+    """Article extracted from an RSS/Atom feed."""
+    title: str
+    source: str
+    date: str
+    content: str
+    link: str
+
+
+def _parse_entry_date(entry) -> datetime | None:
+    """Extract datetime from a feed entry."""
+    for attr in ("published_parsed", "updated_parsed"):
+        parsed = getattr(entry, attr, None)
+        if parsed:
+            return datetime.fromtimestamp(time.mktime(parsed))
+    return None
+
+
+def _extract_content(entry) -> str:
+    """Extract the best available content from a feed entry."""
+    # Try content field first (usually full article)
+    if hasattr(entry, "content") and entry.content:
+        html = entry.content[0].get("value", "")
+        if html:
+            return html_to_clean_text(html)
+
+    # Fall back to summary/description
+    summary = getattr(entry, "summary", "") or getattr(entry, "description", "")
+    if summary:
+        return html_to_clean_text(summary)
+
+    return ""
+
+
+def fetch_rss_articles(days_back: int = 1) -> list[RSSArticle]:
+    """Fetch articles from configured RSS feeds.
+
+    Args:
+        days_back: Only include articles from the last N days.
+
+    Returns:
+        List of RSSArticle objects with clean text content.
+    """
+    cutoff = datetime.now() - timedelta(days=days_back)
+    feeds = Config.RSS_FEEDS
+    articles = []
+
+    print(f"   📡 A ler {len(feeds)} feeds RSS...")
+
+    for feed_url in feeds:
+        try:
+            feed = feedparser.parse(feed_url)
+            feed_title = feed.feed.get("title", feed_url)
+
+            count = 0
+            for entry in feed.entries:
+                entry_date = _parse_entry_date(entry)
+
+                # Filter by date if available
+                if entry_date and entry_date < cutoff:
+                    continue
+
+                content = _extract_content(entry)
+                if not content:
+                    continue
+
+                date_str = entry_date.strftime("%Y-%m-%d %H:%M") if entry_date else "Data desconhecida"
+
+                articles.append(RSSArticle(
+                    title=getattr(entry, "title", "Sem título"),
+                    source=feed_title,
+                    date=date_str,
+                    content=content,
+                    link=getattr(entry, "link", ""),
+                ))
+                count += 1
+
+            print(f"   ✅ {feed_title}: {count} artigos")
+
+        except Exception as e:
+            print(f"   ⚠️ Erro no feed {feed_url}: {e}")
+
+    print(f"   📰 Total: {len(articles)} artigos RSS")
+    return articles
