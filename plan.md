@@ -19,7 +19,7 @@
 - [x] **Etapa 4.2** — Geração do ficheiro Markdown diário com template Jinja2
 
 ### Fase 5: Automação e Finalização
-- [ ] **Etapa 5.1** — Scheduling (execução diária) + entry point robusto
+- [x] **Etapa 5.1** — Scheduling (execução diária) + entry point robusto
 - [ ] **Etapa 5.2** — Testes unitários + documentação final (README)
 
 ---
