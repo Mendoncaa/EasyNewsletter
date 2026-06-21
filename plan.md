@@ -29,6 +29,11 @@
 - [x] **Etapa 6.4** — Fix: NOISE_TAGS dead code + table artifact cleanup
 - [x] **Etapa 6.5** — Resiliência: pipeline continua mesmo se 1 email falhar
 
+### Fase 7: Qualidade de Conteúdo
+- [x] **Etapa 7.1** — Filtro inteligente: List-Unsubscribe header (RFC 2369)
+- [x] **Etapa 7.2** — Sender blacklist configurável (EMAIL_SENDER_BLACKLIST)
+- [x] **Etapa 7.3** — Limite de artigos configurável (MAX_ARTICLES=20)
+
 ---
 
 ## Tech Stack
