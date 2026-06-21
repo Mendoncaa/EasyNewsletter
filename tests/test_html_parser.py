@@ -1,6 +1,6 @@
 """Tests for HTML parser module."""
 
-from src.html_parser import html_to_clean_text, clean_email_content
+from src.html_parser import clean_email_content, html_to_clean_text
 
 
 class TestHtmlToCleanText:

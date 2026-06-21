@@ -3,9 +3,9 @@
 import email
 import email.utils
 import imaplib
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from email.header import decode_header
-from dataclasses import dataclass
 
 from src.config import Config
 

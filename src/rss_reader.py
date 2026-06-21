@@ -1,10 +1,10 @@
 """RSS/Atom feed reader for newsletter aggregation."""
 
 import logging
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-import time
 
 import feedparser
 import httpx
@@ -85,7 +85,6 @@ def fetch_rss_articles(days_back: int = 1) -> list[RSSArticle]:
                 if not content:
                     continue
 
-                date_str = entry_date.strftime("%Y-%m-%d %H:%M") if entry_date else "Data desconhecida"
                 result.append(RSSArticle(
                     title=getattr(entry, "title", "Sem título"),
                     source=feed_title,

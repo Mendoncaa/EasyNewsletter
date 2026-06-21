@@ -3,10 +3,10 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
-from src.email_reader import fetch_newsletters, RawEmail
-from src.html_parser import clean_email_content
-from src.rss_reader import fetch_rss_articles, RSSArticle
 from src.config import Config
+from src.email_reader import RawEmail, fetch_newsletters
+from src.html_parser import clean_email_content
+from src.rss_reader import RSSArticle, fetch_rss_articles
 
 # Sentinel for sorting: earliest possible aware datetime
 _MIN_DATE = datetime.min.replace(tzinfo=timezone.utc)

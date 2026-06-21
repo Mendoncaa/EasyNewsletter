@@ -12,15 +12,15 @@ import argparse
 import logging
 import os
 import sys
-
-import schedule
 import time as time_mod
 
-from src.config import Config
+import schedule
+
 from src.aggregator import aggregate_all
-from src.summarizer import summarize_batch
+from src.config import Config
 from src.markdown_generator import generate_digest
-from src.state import load_seen, save_seen, filter_unseen, mark_seen
+from src.state import filter_unseen, load_seen, mark_seen, save_seen
+from src.summarizer import summarize_batch
 
 # Configure logging
 logging.basicConfig(
@@ -63,7 +63,7 @@ def run_digest(days_back: int = 1) -> None:
     save_seen(seen)
 
     print("\n" + "=" * 50)
-    print(f"✅ Digest gerado com sucesso!")
+    print("✅ Digest gerado com sucesso!")
     print(f"   📄 {output_path}")
     print(f"   📊 {len(summarized)} artigos resumidos")
     print("=" * 50)
@@ -97,7 +97,7 @@ def main():
         print("\n💡 Copia .env.example para .env e preenche as credenciais.")
         sys.exit(1)
 
-    print(f"📰 EasyNewsletter")
+    print("📰 EasyNewsletter")
     print(f"   Email: {Config.EMAIL_ADDRESS}")
     print(f"   Feeds RSS: {len(Config.RSS_FEEDS)} configurados")
     print(f"   Output: {Config.OUTPUT_DIR}/")

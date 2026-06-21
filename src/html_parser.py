@@ -2,9 +2,8 @@
 
 import re
 
-from bs4 import BeautifulSoup
 import html2text
-
+from bs4 import BeautifulSoup
 
 # Tags that typically contain newsletter noise (tracking, ads, footers)
 # Note: img is NOT here — tracking pixels are removed separately by size

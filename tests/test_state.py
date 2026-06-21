@@ -1,12 +1,9 @@
 """Tests for the state/deduplication module."""
 
-import json
-import tempfile
-from pathlib import Path
-from unittest.mock import patch
 from dataclasses import dataclass
+from unittest.mock import patch
 
-from src.state import _article_hash, load_seen, save_seen, filter_unseen, mark_seen
+from src.state import _article_hash, filter_unseen, load_seen, mark_seen, save_seen
 
 
 @dataclass

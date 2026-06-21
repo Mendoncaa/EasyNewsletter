@@ -1,6 +1,7 @@
 """Tests for the email reader module (unit tests only, no IMAP connection)."""
 
 import email
+
 from src.email_reader import _decode_header_value, _extract_body, _parse_date
 
 

@@ -5,8 +5,8 @@ from dataclasses import dataclass
 
 import httpx
 
-from src.config import Config
 from src.aggregator import Article
+from src.config import Config
 
 SYSTEM_PROMPT = """You are a newspaper editor. Generate a concise summary in EXACTLY 3 lines for the provided article.
 Rules:

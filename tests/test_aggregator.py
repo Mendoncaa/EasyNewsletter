@@ -1,9 +1,8 @@
 """Tests for the aggregator module."""
 
 from datetime import datetime, timezone
-from unittest.mock import patch
 
-from src.aggregator import Article, _email_to_article, _rss_to_article, aggregate_all
+from src.aggregator import Article, _email_to_article, _rss_to_article
 from src.email_reader import RawEmail
 from src.rss_reader import RSSArticle
 

@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest ruff mypy
+
+      - name: Lint (ruff)
+        run: ruff check src/ tests/ main.py
+
+      - name: Type check (mypy)
+        run: mypy src/ --ignore-missing-imports
+
+      - name: Tests
+        run: pytest -q

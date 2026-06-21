@@ -1,0 +1,22 @@
+[project]
+name = "easynewsletter"
+version = "1.0.0"
+description = "Agregador de Newsletter Pessoal — transforma emails e RSS num digest diário em Markdown"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true
