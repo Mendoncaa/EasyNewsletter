@@ -19,12 +19,14 @@ def _remove_noise(soup: BeautifulSoup) -> BeautifulSoup:
     """Remove tracking pixels, scripts, styles, and ad-related elements."""
     # Remove noise tags entirely
     for tag in NOISE_TAGS:
-        for el in soup.find_all(tag):
+        for el in list(soup.find_all(tag)):
             el.decompose()
 
     # Remove elements with noise-related class names
-    for el in soup.find_all(attrs={"class": True}):
-        class_attr = el.get("class") if el.attrs else None
+    for el in list(soup.find_all(attrs={"class": True})):
+        if not el.attrs:
+            continue
+        class_attr = el.get("class")
         if not class_attr:
             continue
         classes = " ".join(class_attr) if isinstance(class_attr, list) else str(class_attr)
@@ -32,11 +34,14 @@ def _remove_noise(soup: BeautifulSoup) -> BeautifulSoup:
             el.decompose()
 
     # Remove hidden elements
-    for el in soup.find_all(style=re.compile(r"display\s*:\s*none", re.I)):
-        el.decompose()
+    for el in list(soup.find_all(style=re.compile(r"display\s*:\s*none", re.I))):
+        if el.attrs is not None:
+            el.decompose()
 
     # Remove tracking pixels (1x1 images)
-    for img in soup.find_all("img"):
+    for img in list(soup.find_all("img")):
+        if img.attrs is None:
+            continue
         width = img.get("width", "")
         height = img.get("height", "")
         if width in ("1", "0") or height in ("1", "0"):

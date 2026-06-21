@@ -63,7 +63,11 @@ def aggregate_all(days_back: int = 1) -> list[Article]:
     print("\n📧 A processar emails...")
     try:
         raw_emails = fetch_newsletters(days_back=days_back)
-        articles.extend(_email_to_article(e) for e in raw_emails)
+        for e in raw_emails:
+            try:
+                articles.append(_email_to_article(e))
+            except Exception as ex:
+                print(f"   ⚠️ Erro ao processar email '{e.subject[:40]}': {ex}")
     except Exception as e:
         print(f"   ⚠️ Erro ao ler emails: {e}")
 
@@ -71,7 +75,11 @@ def aggregate_all(days_back: int = 1) -> list[Article]:
     print("\n📡 A processar feeds RSS...")
     try:
         rss_articles = fetch_rss_articles(days_back=days_back)
-        articles.extend(_rss_to_article(a) for a in rss_articles)
+        for a in rss_articles:
+            try:
+                articles.append(_rss_to_article(a))
+            except Exception as ex:
+                print(f"   ⚠️ Erro ao processar artigo RSS '{a.title[:40]}': {ex}")
     except Exception as e:
         print(f"   ⚠️ Erro ao ler feeds RSS: {e}")
 
