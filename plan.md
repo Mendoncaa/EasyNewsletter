@@ -8,7 +8,7 @@
 
 ### Fase 2: Leitura de Emails (IMAP)
 - [ ] **Etapa 2.1** — Conexão IMAP ao Gmail, fetch de emails de newsletters ✅ DONE
-- [ ] **Etapa 2.2** — Parsing de HTML de emails → texto limpo
+- [x] **Etapa 2.2** — Parsing de HTML de emails → texto limpo
 
 ### Fase 3: Leitura de RSS
 - [ ] **Etapa 3.1** — Leitor de feeds RSS/Atom configuráveis
