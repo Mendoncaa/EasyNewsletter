@@ -20,7 +20,7 @@
 
 ### Fase 5: Automação e Finalização
 - [x] **Etapa 5.1** — Scheduling (execução diária) + entry point robusto
-- [ ] **Etapa 5.2** — Testes unitários + documentação final (README)
+- [x] **Etapa 5.2** — Testes unitários + documentação final (README)
 
 ---
 
