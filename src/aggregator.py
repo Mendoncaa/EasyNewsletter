@@ -21,9 +21,6 @@ class Article:
 def _email_to_article(raw: RawEmail) -> Article:
     """Convert a RawEmail into a normalized Article."""
     clean = clean_email_content(raw.html_body, raw.text_body)
-    # Truncate very long content to save tokens for summarization
-    if len(clean) > 5000:
-        clean = clean[:5000] + "\n\n[... conteúdo truncado]"
 
     return Article(
         title=raw.subject,
@@ -36,15 +33,11 @@ def _email_to_article(raw: RawEmail) -> Article:
 
 def _rss_to_article(rss: RSSArticle) -> Article:
     """Convert an RSSArticle into a normalized Article."""
-    content = rss.content
-    if len(content) > 5000:
-        content = content[:5000] + "\n\n[... conteúdo truncado]"
-
     return Article(
         title=rss.title,
         source=rss.source,
         date=rss.date,
-        content=content,
+        content=rss.content,
         origin="rss",
     )
 

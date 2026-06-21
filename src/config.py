@@ -39,6 +39,7 @@ class Config:
     # Output
     OUTPUT_DIR: Path = Path(os.getenv("OUTPUT_DIR", "output"))
     MAX_ARTICLES: int = int(os.getenv("MAX_ARTICLES", "20"))
+    MAX_CONTENT_CHARS: int = int(os.getenv("MAX_CONTENT_CHARS", "3000"))
 
     @classmethod
     def validate(cls) -> list[str]:

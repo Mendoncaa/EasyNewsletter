@@ -9,6 +9,8 @@ Usage:
 """
 
 import argparse
+import logging
+import os
 import sys
 
 import schedule
@@ -19,6 +21,12 @@ from src.aggregator import aggregate_all
 from src.summarizer import summarize_batch
 from src.markdown_generator import generate_digest
 
+# Configure logging
+logging.basicConfig(
+    level=getattr(logging, os.getenv("LOG_LEVEL", "WARNING").upper(), logging.WARNING),
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    datefmt="%H:%M:%S",
+)
 
 def run_digest(days_back: int = 1) -> None:
     """Execute the full digest pipeline once."""

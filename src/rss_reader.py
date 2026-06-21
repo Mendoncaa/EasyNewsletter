@@ -1,5 +1,7 @@
 """RSS/Atom feed reader for newsletter aggregation."""
 
+import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 import time
@@ -9,6 +11,8 @@ import httpx
 
 from src.config import Config
 from src.html_parser import html_to_clean_text
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -61,9 +65,10 @@ def fetch_rss_articles(days_back: int = 1) -> list[RSSArticle]:
 
     print(f"   📡 A ler {len(feeds)} feeds RSS...")
 
-    for feed_url in feeds:
+    def _fetch_single_feed(feed_url: str) -> list[RSSArticle]:
+        """Fetch and parse a single feed. Thread-safe."""
+        result = []
         try:
-            # Fetch with timeout to prevent hangs in daemon mode
             resp = httpx.get(
                 feed_url, timeout=15.0, follow_redirects=True, verify=True
             )
@@ -71,11 +76,8 @@ def fetch_rss_articles(days_back: int = 1) -> list[RSSArticle]:
             feed = feedparser.parse(resp.content)
             feed_title = feed.feed.get("title", feed_url)
 
-            count = 0
             for entry in feed.entries:
                 entry_date = _parse_entry_date(entry)
-
-                # Filter by date if available
                 if entry_date and entry_date < cutoff:
                     continue
 
@@ -84,24 +86,31 @@ def fetch_rss_articles(days_back: int = 1) -> list[RSSArticle]:
                     continue
 
                 date_str = entry_date.strftime("%Y-%m-%d %H:%M") if entry_date else "Data desconhecida"
-
-                articles.append(RSSArticle(
+                result.append(RSSArticle(
                     title=getattr(entry, "title", "Sem título"),
                     source=feed_title,
                     date=date_str,
                     content=content,
                     link=getattr(entry, "link", ""),
                 ))
-                count += 1
 
-            print(f"   ✅ {feed_title}: {count} artigos")
-
+            print(f"   ✅ {feed_title}: {len(result)} artigos")
         except httpx.TimeoutException:
+            logger.warning(f"Timeout (15s) no feed: {feed_url}")
             print(f"   ⚠️ Timeout (15s) no feed: {feed_url}")
         except httpx.HTTPStatusError as e:
+            logger.warning(f"HTTP {e.response.status_code} no feed: {feed_url}")
             print(f"   ⚠️ HTTP {e.response.status_code} no feed: {feed_url}")
         except Exception as e:
+            logger.exception(f"Erro no feed {feed_url}")
             print(f"   ⚠️ Erro no feed {feed_url}: {e}")
+        return result
+
+    # Fetch feeds in parallel (I/O-bound)
+    with ThreadPoolExecutor(max_workers=min(4, len(feeds))) as pool:
+        futures = {pool.submit(_fetch_single_feed, url): url for url in feeds}
+        for future in as_completed(futures):
+            articles.extend(future.result())
 
     print(f"   📰 Total: {len(articles)} artigos RSS")
     return articles

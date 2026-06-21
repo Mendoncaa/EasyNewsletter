@@ -2,18 +2,21 @@
 
 from datetime import datetime
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from jinja2 import Environment, FileSystemLoader
 
 from src.config import Config
 
+if TYPE_CHECKING:
+    from src.summarizer import SummarizedArticle
 
-def generate_digest(summarized_articles: list[dict]) -> Path:
+
+def generate_digest(summarized_articles: "list[SummarizedArticle]") -> Path:
     """Generate a daily Markdown digest file from summarized articles.
 
     Args:
-        summarized_articles: List of dicts with keys:
-            title, source, date, summary, origin.
+        summarized_articles: List of SummarizedArticle dataclass instances.
 
     Returns:
         Path to the generated .md file.
@@ -23,9 +26,9 @@ def generate_digest(summarized_articles: list[dict]) -> Path:
     env = Environment(loader=FileSystemLoader(templates_dir))
     template = env.get_template("daily_digest.md.j2")
 
-    # Split articles by origin
-    email_articles = [a for a in summarized_articles if a["origin"] == "email"]
-    rss_articles = [a for a in summarized_articles if a["origin"] == "rss"]
+    # Split articles by origin (attribute access works with dataclasses in Jinja2)
+    email_articles = [a for a in summarized_articles if a.origin == "email"]
+    rss_articles = [a for a in summarized_articles if a.origin == "rss"]
 
     now = datetime.now()
     content = template.render(

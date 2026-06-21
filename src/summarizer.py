@@ -1,6 +1,8 @@
 """AI-powered article summarizer using Ollama (local) or OpenAI."""
 
 import re
+from dataclasses import dataclass
+
 import httpx
 
 from src.config import Config
@@ -16,6 +18,24 @@ Rules:
 - Output ONLY the 3 lines, nothing else"""
 
 
+@dataclass
+class SummarizedArticle:
+    """Article with AI-generated summary."""
+    title: str
+    source: str
+    date: str
+    summary: str
+    origin: str
+
+
+def _truncate(content: str) -> str:
+    """Truncate content to configured max chars for AI input."""
+    limit = Config.MAX_CONTENT_CHARS
+    if len(content) > limit:
+        return content[:limit]
+    return content
+
+
 def _call_ollama(title: str, content: str) -> str | None:
     """Call Ollama local API for summarization."""
     try:
@@ -25,7 +45,7 @@ def _call_ollama(title: str, content: str) -> str | None:
                 "model": Config.OLLAMA_MODEL,
                 "messages": [
                     {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": f"Title: {title}\n\nContent:\n{content[:3000]}"},
+                    {"role": "user", "content": f"Title: {title}\n\nContent:\n{_truncate(content)}"},
                 ],
                 "stream": False,
                 "options": {"temperature": 0.3, "num_predict": 200},
@@ -33,9 +53,18 @@ def _call_ollama(title: str, content: str) -> str | None:
             timeout=60.0,
         )
         response.raise_for_status()
-        return response.json()["message"]["content"].strip()
+        data = response.json()
+        # Validate response schema
+        message = data.get("message")
+        if not message or not isinstance(message, dict):
+            return None
+        text = message.get("content")
+        return text.strip() if text else None
     except httpx.ConnectError:
         print("   ⚠️ Ollama não está a correr. Inicia com: ollama serve")
+        return None
+    except httpx.TimeoutException:
+        print(f"   ⚠️ Ollama timeout (60s) para '{title[:30]}'")
         return None
     except Exception as e:
         print(f"   ⚠️ Erro Ollama: {e}")
@@ -51,12 +80,18 @@ def _call_openai(title: str, content: str) -> str | None:
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": f"Title: {title}\n\nContent:\n{content[:3000]}"},
+                {"role": "user", "content": f"Title: {title}\n\nContent:\n{_truncate(content)}"},
             ],
             max_tokens=200,
             temperature=0.3,
         )
-        return response.choices[0].message.content.strip()
+        choice = response.choices[0] if response.choices else None
+        if not choice or not choice.message:
+            return None
+        return choice.message.content.strip() if choice.message.content else None
+    except ImportError:
+        print("   ⚠️ openai não instalado. Instala com: pip install openai")
+        return None
     except Exception as e:
         print(f"   ⚠️ Erro OpenAI: {e}")
         return None
@@ -69,7 +104,7 @@ def _detect_ai_backend() -> str:
             r = httpx.get(f"{Config.OLLAMA_URL}/api/tags", timeout=3.0)
             if r.status_code == 200:
                 return "ollama"
-        except httpx.ConnectError:
+        except (httpx.ConnectError, httpx.TimeoutException):
             pass
 
     if Config.OPENAI_API_KEY and not Config.OPENAI_API_KEY.startswith("sk-your"):
@@ -90,8 +125,8 @@ def summarize_article(article: Article, backend: str) -> str:
     return result if result else _fallback_summary(article.content)
 
 
-def summarize_batch(articles: list[Article]) -> list[dict]:
-    """Summarize a list of articles, returning enriched dicts."""
+def summarize_batch(articles: list[Article]) -> list[SummarizedArticle]:
+    """Summarize a list of articles, returning typed SummarizedArticle list."""
     backend = _detect_ai_backend()
     labels = {"ollama": f"Ollama ({Config.OLLAMA_MODEL})", "openai": "OpenAI", "fallback": "fallback (sem IA)"}
     print(f"   🤖 Modo de resumo: {labels[backend]}")
@@ -100,13 +135,13 @@ def summarize_batch(articles: list[Article]) -> list[dict]:
     for i, article in enumerate(articles):
         print(f"   📝 [{i+1}/{len(articles)}] {article.title[:50]}...")
         summary = summarize_article(article, backend)
-        results.append({
-            "title": article.title,
-            "source": article.source,
-            "date": article.date,
-            "summary": summary,
-            "origin": article.origin,
-        })
+        results.append(SummarizedArticle(
+            title=article.title,
+            source=article.source,
+            date=article.date,
+            summary=summary,
+            origin=article.origin,
+        ))
 
     return results
 
