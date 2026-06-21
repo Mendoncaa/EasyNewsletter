@@ -1,11 +1,28 @@
 # 📰 Digest Diário — {{ date }}
 
-> Gerado automaticamente pelo EasyNewsletter
+> Gerado automaticamente pelo **EasyNewsletter** às {{ time }}
 
 ---
 
-{% for article in articles %}
-## {{ loop.index }}. {{ article.title }}
+{% if email_articles %}
+## 📧 Newsletters ({{ email_articles | length }})
+
+{% for article in email_articles %}
+### {{ loop.index }}. {{ article.title }}
+
+**De:** {{ article.source }} | **Data:** {{ article.date }}
+
+{{ article.summary }}
+
+---
+
+{% endfor %}
+{% endif %}
+{% if rss_articles %}
+## 📡 RSS Feeds ({{ rss_articles | length }})
+
+{% for article in rss_articles %}
+### {{ loop.index }}. {{ article.title }}
 
 **Fonte:** {{ article.source }} | **Data:** {{ article.date }}
 
@@ -14,5 +31,6 @@
 ---
 
 {% endfor %}
+{% endif %}
 
-*Total: {{ articles | length }} artigos resumidos.*
+*Total: {{ total }} artigos resumidos ({{ email_articles | length }} emails + {{ rss_articles | length }} RSS).*

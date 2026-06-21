@@ -16,7 +16,7 @@
 
 ### Fase 4: Inteligência Artificial
 - [x] **Etapa 4.1** — Integração com OpenAI (resumo de 3 linhas por artigo)
-- [ ] **Etapa 4.2** — Geração do ficheiro Markdown diário com template Jinja2
+- [x] **Etapa 4.2** — Geração do ficheiro Markdown diário com template Jinja2
 
 ### Fase 5: Automação e Finalização
 - [ ] **Etapa 5.1** — Scheduling (execução diária) + entry point robusto
