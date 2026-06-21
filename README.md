@@ -82,10 +82,25 @@ ollama serve
 
 Não precisa de API keys — tudo corre localmente, sem custos.
 
+## Agendamento Diário (Windows)
+
+O ficheiro `run_daily.bat` pode ser agendado via **Task Scheduler**:
+
+1. Abrir Task Scheduler → "Create Basic Task"
+2. Trigger: Daily, às 07:00
+3. Action: Start a program → Selecionar `run_daily.bat`
+4. "Start in": `C:\Users\DavidMendonca\Projetos\EasyNewsletter`
+
+Alternativa rápida (PowerShell admin):
+```powershell
+schtasks /create /tn "EasyNewsletter" /tr "C:\Users\DavidMendonca\Projetos\EasyNewsletter\run_daily.bat" /sc daily /st 07:00
+```
+
 ## Testes
 
 ```bash
 python -m pytest tests/ -v
+ruff check src/ tests/ main.py
 ```
 
 ## Output

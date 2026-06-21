@@ -34,16 +34,37 @@
 - [x] **Etapa 7.2** — Sender blacklist configurável (EMAIL_SENDER_BLACKLIST)
 - [x] **Etapa 7.3** — Limite de artigos configurável (MAX_ARTICLES=20)
 
+### Fase 8: Correções Críticas (plano de melhorias)
+- [x] **Etapa 8.1** — Fix main() executava pipeline 2× (bloco if duplicado)
+- [x] **Etapa 8.2** — IMAP two-phase fetch (headers primeiro, body só para newsletters)
+- [x] **Etapa 8.3** — RSS com httpx timeout 15s (previne hangs em daemon mode)
+
+### Fase 9: Robustez e Performance
+- [x] **Etapa 9.1** — openai como dependência explícita no requirements
+- [x] **Etapa 9.2** — SummarizedArticle dataclass (type safety, elimina dicts)
+- [x] **Etapa 9.3** — Paralelizar RSS feeds (ThreadPoolExecutor, max_workers=4)
+- [x] **Etapa 9.4** — Logging configurável (LOG_LEVEL env)
+- [x] **Etapa 9.5** — Validação de resposta Ollama/OpenAI (.get() seguro)
+- [x] **Etapa 9.6** — Truncagem unificada via Config.MAX_CONTENT_CHARS
+
+### Fase 10: Manutenibilidade e Escalabilidade
+- [x] **Etapa 10.1** — Estado persistente + deduplicação (.seen.json)
+- [x] **Etapa 10.2** — Ordenação por datetime real (timezone-aware)
+- [x] **Etapa 10.3** — Testes expandidos: 37 testes (state, aggregator, etc.)
+- [x] **Etapa 10.4** — pyproject.toml + ruff lint + GitHub Actions CI
+- [x] **Etapa 10.5** — Task Scheduler (Windows) + run_daily.bat
+
 ---
 
 ## Tech Stack
 - **Linguagem:** Python 3.14
-- **IMAP:** imaplib (stdlib)
-- **RSS:** feedparser
+- **IMAP:** imaplib (stdlib, two-phase fetch)
+- **RSS:** feedparser + httpx (parallel, timeout)
 - **HTML Parsing:** beautifulsoup4 + html2text
 - **IA (primário):** Ollama (llama3.2, local e gratuito)
 - **IA (fallback):** OpenAI GPT-3.5-turbo (opcional)
 - **HTTP:** httpx
 - **Config:** python-dotenv
 - **Templates:** jinja2
-- **Scheduling:** schedule
+- **Scheduling:** Task Scheduler (Windows) / schedule (daemon)
+- **Quality:** ruff + mypy + pytest (37 tests) + GitHub Actions CI
