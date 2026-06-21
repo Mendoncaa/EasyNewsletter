@@ -64,10 +64,23 @@ Copia `.env.example` para `.env` e preenche:
 
 - `EMAIL_ADDRESS` — O teu email
 - `EMAIL_PASSWORD` — App Password do Gmail (não a password normal!)
-- `OPENAI_API_KEY` — Chave da API OpenAI (opcional — há fallback)
+- `OLLAMA_URL` — URL do Ollama local (default: `http://localhost:11434`)
+- `OLLAMA_MODEL` — Modelo a usar (default: `llama3.2`)
 - `RSS_FEEDS` — URLs de feeds RSS separados por vírgula
 
 > ⚠️ **Gmail:** Usa uma [App Password](https://myaccount.google.com/apppasswords), não a password da conta.
+
+## IA (Resumos)
+
+**Prioridade de backends:** Ollama (local) → OpenAI (cloud) → Fallback (extração de texto)
+
+```bash
+# Instalar Ollama: https://ollama.ai
+ollama pull llama3.2
+ollama serve
+```
+
+Não precisa de API keys — tudo corre localmente, sem custos.
 
 ## Testes
 
